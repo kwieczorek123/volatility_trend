@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # Read in the data
-df = pd.read_csv("data/USDJPY/USDJPY1440.csv", names=['date', 'time', 'open', 'high', 'low', 'close', 'volume'])
+df = pd.read_csv("data/XAUUSD/XAUUSD1440.csv", names=['date', 'time', 'open', 'high', 'low', 'close', 'volume'])
 # Set the date as the index
 df.set_index('date', inplace=True)
 # Drop the time and volume columns
@@ -60,4 +60,4 @@ for i in range(1, len(df)):
 
 
 # Save the results to a CSV file
-df.to_csv('USDJPY_choppiness_index_new.csv')
+df.to_csv('XAUUSD_choppiness_index_new.csv')
