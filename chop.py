@@ -60,4 +60,4 @@ for i in range(1, len(df)):
 
 
 # Save the results to a CSV file
-df.to_csv('XAUUSD_choppiness_index_new.csv')
+df.to_csv('processed_trend_data/XAUUSD_choppiness_index_new.csv')

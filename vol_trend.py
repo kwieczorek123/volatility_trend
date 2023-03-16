@@ -4,6 +4,8 @@ import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
+from sklearn.linear_model import LinearRegression
+import numpy as np
 
 # Define file names for input data
 file_names = ['vol_trend_data/EURUSD_chop.csv', 'vol_trend_data/GBPUSD_chop.csv', 'vol_trend_data/USDJPY_chop.csv',
@@ -76,6 +78,15 @@ def add_pnl_per_lot_column(df, pnl_df, symbol):
     return df
 
 
+# Modify the add_pnl_per_lot_column function to add the 'profit' and 'volume' columns
+def add_pnl_per_lot_column(df, pnl_df, symbol):
+    df = df.merge(pnl_df.loc[pnl_df['symbol_name'] == symbol, ['day', 'PnL/Lot', 'profit', 'volume']],
+                  left_on='date', right_on='day', how='left')
+    df = df.rename(columns={'PnL/Lot': 'PnL_per_lot', 'profit': 'total_profit', 'volume': 'total_volume'})
+    df.drop(columns=['day'], inplace=True)
+    return df
+
+
 # Function to process input CSV files, add required columns, and save the processed data to a new CSV file
 def process_csv(file_name, start_date, end_date, spread_df, execution_df, pnl_df_dict):
     symbol = file_name.split('/')[-1].split('_')[0]  # Extract the symbol from the file name
@@ -107,7 +118,7 @@ for file_name in file_names:
 def create_pivot_tables_and_charts(processed_files):
     processed_dfs = [pd.read_csv(file) for file in processed_files]
 
-    combined_df = pd.concat(processed_dfs, keys=['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'], names=['Symbol']).reset_index(
+    combined_df = pd.concat(processed_dfs, keys=['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'], names=['symbol']).reset_index(
         level=0).reset_index(drop=True)
 
     combined_df = combined_df[combined_df['Volatility_Trend'].notna()]
@@ -121,31 +132,61 @@ def create_pivot_tables_and_charts(processed_files):
     for symbol in ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD']:
         ws.cell(row=row_offset, column=1, value=symbol).font = Font(bold=True)
 
-        symbol_df = combined_df[combined_df['Symbol'] == symbol]
+        symbol_df = combined_df[combined_df['symbol'] == symbol]
 
         pivot = pd.pivot_table(symbol_df, index='Volatility_Trend',
                                values=['typical_spread_in_points', 'weighted_avg_execution_spread_$',
-                                       'PnL_per_lot'],
+                                       'PnL_per_lot', 'total_profit', 'total_volume'],
                                aggfunc={'typical_spread_in_points': 'mean',
                                         'weighted_avg_execution_spread_$': 'mean',
-                                        'PnL_per_lot': ['mean', 'count']})
+                                        'PnL_per_lot': ['mean', 'count'],
+                                        'total_profit': 'sum',
+                                        'total_volume': 'sum'})
 
         pivot.columns = ['_'.join(col).strip() if col[-1] == 'count' else col[0] for col in pivot.columns.values]
         pivot.rename(columns={'PnL_per_lot_count': 'count_of_occurrences'}, inplace=True)
 
+        # Calculate the percentage of total occurrences for each Volatility_Trend
+        total_occurrences = pivot['count_of_occurrences'].sum()
+        pivot['percentage_of_occurrences'] = pivot['count_of_occurrences'] / total_occurrences * 100
+
+        impact_values = []
+        for trend in pivot.index:
+            trend_df = symbol_df[symbol_df['Volatility_Trend'] == trend]
+
+            # Drop rows with NaN values in the 'PnL_per_lot' column and 'weighted_avg_execution_spread_$' column
+            trend_df = trend_df.dropna(subset=['PnL_per_lot', 'weighted_avg_execution_spread_$'])
+
+            X = trend_df[['weighted_avg_execution_spread_$']]
+            y = trend_df['PnL_per_lot']
+
+            # Skip fitting the model if there are no valid data points
+            if len(X) == 0 or len(y) == 0:
+                impact_values.append(np.nan)
+                continue
+
+            model = LinearRegression()
+            model.fit(X, y)
+
+            impact = model.coef_[0]
+            impact_values.append(impact)
+
+        pivot['one_point_increase_of_weighted_spread_lr'] = impact_values
+
         row_offset += 1
 
+        # Append the pivot table to the worksheet
         for r in dataframe_to_rows(pivot, index=True, header=True):
             ws.append(r)
 
-        row_offset += len(pivot) + 2
+            row_offset += len(pivot) + 2
 
         # Adjust column widths to fit the content
-    for column_cells in ws.columns:
-        length = max(len(str(cell.value)) for cell in column_cells)
-        ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
+        for column_cells in ws.columns:
+            length = max(len(str(cell.value)) for cell in column_cells)
+            ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
 
-    wb.save("processed_vol_trend_data/pivots.xlsx")
+        wb.save("processed_vol_trend_data/pivots.xlsx")
 
 
 # Add this line to the end of your script to call the function
@@ -155,4 +196,3 @@ create_pivot_tables_and_charts([
     "processed_vol_trend_data/processed_USDJPY_vol_trend.csv",
     "processed_vol_trend_data/processed_XAUUSD_vol_trend.csv"
 ])
-

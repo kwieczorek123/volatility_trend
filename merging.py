@@ -1,12 +1,12 @@
 import pandas as pd
 
-df_gbp_2 = pd.read_csv('GBPUSD_2st_dev_move.csv')
-df_eur_2 = pd.read_csv('EURUSD_2st_dev_pct_move.csv')
-df_xau_2 = pd.read_csv('XAUUSD_2mean_diff.csv')
+df_gbp_2 = pd.read_csv('st_dev_moves_processed_data/GBPUSD_2st_dev_move.csv')
+df_eur_2 = pd.read_csv('st_dev_moves_processed_data/EURUSD_2st_dev_pct_move.csv')
+df_xau_2 = pd.read_csv('st_dev_moves_processed_data/XAUUSD_2mean_diff.csv')
 
-df_gbp_3 = pd.read_csv('GBPUSD_3st_dev_move.csv')
-df_eur_3 = pd.read_csv('EURUSD_3st_dev_pct_move.csv')
-df_xau_3 = pd.read_csv('XAUUSD_3mean_diff.csv')
+df_gbp_3 = pd.read_csv('st_dev_moves_processed_data/GBPUSD_3st_dev_move.csv')
+df_eur_3 = pd.read_csv('st_dev_moves_processed_data/EURUSD_3st_dev_pct_move.csv')
+df_xau_3 = pd.read_csv('st_dev_moves_processed_data/XAUUSD_3mean_diff.csv')
 
 roll = 252 * 1
 
