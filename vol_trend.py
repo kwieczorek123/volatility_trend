@@ -88,7 +88,8 @@ def process_csv(file_name, start_date, end_date, spread_df, execution_df, pnl_df
     output_dir = "processed_vol_trend_data"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    output_file_path = os.path.join(output_dir, f'processed_{os.path.basename(file_name)}')
+    output_file_name = os.path.basename(file_name).replace("_chop", "_vol_trend")  # Replace '_chop' with '_vol_trend'
+    output_file_path = os.path.join(output_dir, f'processed_{output_file_name}')
     df.to_csv(output_file_path, index=False)
     print(f"Processed {file_name}")
 
@@ -146,10 +147,12 @@ def create_pivot_tables_and_charts(processed_files):
 
     wb.save("processed_vol_trend_data/pivots.xlsx")
 
-    # Add this line to the end of your script to call the function
-    create_pivot_tables_and_charts([
-        "processed_vol_trend_data/processed_EURUSD_chop.csv",
-        "processed_vol_trend_data/processed_GBPUSD_chop.csv",
-        "processed_vol_trend_data/processed_USDJPY_chop.csv",
-        "processed_vol_trend_data/processed_XAUUSD_chop.csv"
-    ])
+
+# Add this line to the end of your script to call the function
+create_pivot_tables_and_charts([
+    "processed_vol_trend_data/processed_EURUSD_vol_trend.csv",
+    "processed_vol_trend_data/processed_GBPUSD_vol_trend.csv",
+    "processed_vol_trend_data/processed_USDJPY_vol_trend.csv",
+    "processed_vol_trend_data/processed_XAUUSD_vol_trend.csv"
+])
+
