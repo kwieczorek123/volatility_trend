@@ -133,7 +133,6 @@ for file_name in file_names:
     process_csv_long(file_name, start_date_long, end_date_long)
 
 
-
 # Function to create pivot tables and charts using the processed data
 def create_pivot_tables_and_charts(processed_files):
     processed_dfs = [pd.read_csv(file) for file in processed_files]
@@ -181,6 +180,19 @@ def create_pivot_tables_and_charts(processed_files):
                                        'weighted_avg_execution_spread_$', 'PnL_per_lot', 'total_profit',
                                        'total_volume', 'impact_on_PnL_1$_increase_of_weighted+spread'])
 
+        # Calculate the percentage of total_profit and total_volume for each Volatility_Trend
+        total_profit = pivot['total_profit'].sum()
+        total_volume = pivot['total_volume'].sum()
+        pivot['pct_total_profit'] = pivot['total_profit'] / total_profit * 100
+        pivot['pct_total_volume'] = pivot['total_volume'] / total_volume * 100
+
+        # Insert the new columns after total_profit and total_volume
+        pivot = pivot.reindex(columns=['count_of_occurrences', 'percentage_of_occurrences', 'typical_spread_in_points',
+                                       'weighted_avg_execution_spread_$', 'PnL_per_lot', 'total_profit',
+                                       'pct_total_profit',
+                                       'total_volume', 'pct_total_volume',
+                                       'impact_on_PnL_1$_increase_of_weighted+spread'])
+
         row_offset += 1
 
         # Append the pivot table to the worksheet
@@ -205,6 +217,9 @@ def create_pivot_tables_and_charts_long(processed_files):
 
     combined_df = combined_df[combined_df['Volatility_Trend'].notna()]
 
+    # Convert the 'date' column to a datetime object
+    combined_df['date'] = pd.to_datetime(combined_df['date'])
+
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Pivots_long"
@@ -216,28 +231,37 @@ def create_pivot_tables_and_charts_long(processed_files):
 
         symbol_df = combined_df[combined_df['symbol'] == symbol]
 
-        pivot = pd.pivot_table(symbol_df, index='Volatility_Trend',
-                               values=['Volatility'],
-                               aggfunc={'Volatility': 'count'})
+        # Get a list of years with no missing values in the Volatility_median column
+        valid_years = symbol_df.groupby(symbol_df['date'].dt.year)['Volatility_median'].apply(lambda x: x.notna().all())
+        valid_years = valid_years[valid_years].index.tolist()
 
-        pivot.rename(columns={'Volatility': 'count_of_occurrences'}, inplace=True)
+        # Filter out the rows with invalid years
+        symbol_df = symbol_df[symbol_df['date'].dt.year.isin(valid_years)]
 
-        total_occurrences = pivot['count_of_occurrences'].sum()
-        pivot['percentage_of_occurrences'] = pivot['count_of_occurrences'] / total_occurrences * 100
+        pivot = pd.pivot_table(symbol_df, index='Volatility_Trend', columns=symbol_df['date'].dt.year,
+                               values='date', aggfunc='count')
+
+        # Add a column for the total count of occurrences for all years
+        pivot['total_count_of_occurrences'] = pivot.sum(axis=1)
+
+        # Calculate percentage of total occurrences for each Volatility_Trend
+        pivot['percentage_of_occurrences'] = (pivot['total_count_of_occurrences'] / pivot[
+            'total_count_of_occurrences'].sum()) * 100
 
         row_offset += 1
 
+        # Append the pivot table to the worksheet
         for r in dataframe_to_rows(pivot, index=True, header=True):
             ws.append(r)
 
             row_offset += 1
 
+        # Adjust column widths to fit the content
         for column_cells in ws.columns:
             length = max(len(str(cell.value)) for cell in column_cells)
             ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
 
     wb.save("processed_vol_trend_data_long/pivots_long.xlsx")
-
 
 
 # Add this line to the end of your script to call the function
