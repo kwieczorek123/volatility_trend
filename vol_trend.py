@@ -4,8 +4,6 @@ import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
-from sklearn.linear_model import LinearRegression
-import numpy as np
 
 # Define file names for input data
 file_names = ['vol_trend_data/EURUSD_chop.csv', 'vol_trend_data/GBPUSD_chop.csv', 'vol_trend_data/USDJPY_chop.csv',
@@ -150,28 +148,16 @@ def create_pivot_tables_and_charts(processed_files):
         total_occurrences = pivot['count_of_occurrences'].sum()
         pivot['percentage_of_occurrences'] = pivot['count_of_occurrences'] / total_occurrences * 100
 
-        impact_values = []
-        for trend in pivot.index:
-            trend_df = symbol_df[symbol_df['Volatility_Trend'] == trend]
+        # Change the calculation for the PnL_per_lot column
+        pivot['PnL_per_lot'] = pivot['total_profit'] / pivot['total_volume']
 
-            # Drop rows with NaN values in the 'PnL_per_lot' column and 'weighted_avg_execution_spread_$' column
-            trend_df = trend_df.dropna(subset=['PnL_per_lot', 'weighted_avg_execution_spread_$'])
+        # Add the impact_on_PnL_1$_increase_of_weighted+spread column
+        pivot['impact_on_PnL_1$_increase_of_weighted+spread'] = abs(pivot['total_volume'] / pivot['total_profit'])
 
-            X = trend_df[['weighted_avg_execution_spread_$']]
-            y = trend_df['PnL_per_lot']
-
-            # Skip fitting the model if there are no valid data points
-            if len(X) == 0 or len(y) == 0:
-                impact_values.append(np.nan)
-                continue
-
-            model = LinearRegression()
-            model.fit(X, y)
-
-            impact = model.coef_[0]
-            impact_values.append(impact)
-
-        pivot['one_point_increase_of_weighted_spread_lr'] = impact_values
+        # Rearrange the columns
+        pivot = pivot.reindex(columns=['count_of_occurrences', 'percentage_of_occurrences', 'typical_spread_in_points',
+                                       'weighted_avg_execution_spread_$', 'PnL_per_lot', 'total_profit',
+                                       'total_volume', 'impact_on_PnL_1$_increase_of_weighted+spread'])
 
         row_offset += 1
 
@@ -179,7 +165,7 @@ def create_pivot_tables_and_charts(processed_files):
         for r in dataframe_to_rows(pivot, index=True, header=True):
             ws.append(r)
 
-            row_offset += len(pivot) + 2
+            row_offset += 1
 
         # Adjust column widths to fit the content
         for column_cells in ws.columns:
