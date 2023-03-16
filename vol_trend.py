@@ -21,6 +21,8 @@ pnl_df_dict = {symbol: pd.read_csv(pnl_file, parse_dates=['day']) for pnl_file, 
 start_date = '2021-01-01'
 end_date = '2023-02-28'
 roll = 252
+start_date_long = '2015-01-01'
+end_date_long = '2022-12-31'
 
 
 # Function to add volatility columns to the input DataFrame
@@ -103,6 +105,22 @@ def process_csv(file_name, start_date, end_date, spread_df, execution_df, pnl_df
     print(f"Processed {file_name}")
 
 
+def process_csv_long(file_name, start_date, end_date):
+    symbol = file_name.split('/')[-1].split('_')[0]  # Extract the symbol from the file name
+    df = pd.read_csv(file_name, parse_dates=['date'])
+    df = add_volatility_columns(df)
+    df = filter_date_range(df, start_date, end_date)
+    df = mark_volatility_trend(df)
+
+    output_dir = "processed_vol_trend_data_long"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    output_file_name = os.path.basename(file_name).replace("_chop", "_vol_trend_long")
+    output_file_path = os.path.join(output_dir, f'processed_{output_file_name}')
+    df.to_csv(output_file_path, index=False)
+    print(f"Processed {file_name}")
+
+
 # Read input data from the spread and execution files
 spread_df = pd.read_csv(spread_all_symbols_file, parse_dates=['day'])
 execution_df = pd.read_csv(execution_spread_file, parse_dates=['date'])
@@ -110,6 +128,10 @@ execution_df = pd.read_csv(execution_spread_file, parse_dates=['date'])
 # Process each input file
 for file_name in file_names:
     process_csv(file_name, start_date, end_date, spread_df, execution_df, pnl_df_dict)
+
+for file_name in file_names:
+    process_csv_long(file_name, start_date_long, end_date_long)
+
 
 
 # Function to create pivot tables and charts using the processed data
@@ -175,10 +197,60 @@ def create_pivot_tables_and_charts(processed_files):
         wb.save("processed_vol_trend_data/pivots.xlsx")
 
 
+def create_pivot_tables_and_charts_long(processed_files):
+    processed_dfs = [pd.read_csv(file) for file in processed_files]
+
+    combined_df = pd.concat(processed_dfs, keys=['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'], names=['symbol']).reset_index(
+        level=0).reset_index(drop=True)
+
+    combined_df = combined_df[combined_df['Volatility_Trend'].notna()]
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Pivots_long"
+
+    row_offset = 1
+
+    for symbol in ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD']:
+        ws.cell(row=row_offset, column=1, value=symbol).font = Font(bold=True)
+
+        symbol_df = combined_df[combined_df['symbol'] == symbol]
+
+        pivot = pd.pivot_table(symbol_df, index='Volatility_Trend',
+                               values=['Volatility'],
+                               aggfunc={'Volatility': 'count'})
+
+        pivot.rename(columns={'Volatility': 'count_of_occurrences'}, inplace=True)
+
+        total_occurrences = pivot['count_of_occurrences'].sum()
+        pivot['percentage_of_occurrences'] = pivot['count_of_occurrences'] / total_occurrences * 100
+
+        row_offset += 1
+
+        for r in dataframe_to_rows(pivot, index=True, header=True):
+            ws.append(r)
+
+            row_offset += 1
+
+        for column_cells in ws.columns:
+            length = max(len(str(cell.value)) for cell in column_cells)
+            ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
+
+    wb.save("processed_vol_trend_data_long/pivots_long.xlsx")
+
+
+
 # Add this line to the end of your script to call the function
 create_pivot_tables_and_charts([
     "processed_vol_trend_data/processed_EURUSD_vol_trend.csv",
     "processed_vol_trend_data/processed_GBPUSD_vol_trend.csv",
     "processed_vol_trend_data/processed_USDJPY_vol_trend.csv",
     "processed_vol_trend_data/processed_XAUUSD_vol_trend.csv"
+])
+
+create_pivot_tables_and_charts_long([
+    "processed_vol_trend_data_long/processed_EURUSD_vol_trend_long.csv",
+    "processed_vol_trend_data_long/processed_GBPUSD_vol_trend_long.csv",
+    "processed_vol_trend_data_long/processed_USDJPY_vol_trend_long.csv",
+    "processed_vol_trend_data_long/processed_XAUUSD_vol_trend_long.csv"
 ])
