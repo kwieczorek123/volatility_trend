@@ -172,13 +172,13 @@ def create_pivot_tables_and_charts(processed_files):
         # Change the calculation for the PnL_per_lot column
         pivot['PnL_per_lot'] = pivot['total_profit'] / pivot['total_volume']
 
-        # Add the impact_on_PnL_1$_increase_of_weighted+spread column
-        pivot['impact_on_PnL_1$_increase_of_weighted+spread'] = abs(pivot['total_volume'] / pivot['total_profit'])
+        # Add the pct_impact_on_PnL_weighted_spread column
+        pivot['pct_impact_on_PnL_exec_spread'] = abs(pivot['total_volume'] / pivot['total_profit'])
 
         # Rearrange the columns
         pivot = pivot.reindex(columns=['count_of_occurrences', 'percentage_of_occurrences', 'typical_spread_in_points',
                                        'weighted_avg_execution_spread_$', 'PnL_per_lot', 'total_profit',
-                                       'total_volume', 'impact_on_PnL_1$_increase_of_weighted+spread'])
+                                       'total_volume', 'pct_impact_on_PnL_exec_spread'])
 
         # Calculate the percentage of total_profit and total_volume for each Volatility_Trend
         total_profit = pivot['total_profit'].sum()
@@ -191,7 +191,7 @@ def create_pivot_tables_and_charts(processed_files):
                                        'weighted_avg_execution_spread_$', 'PnL_per_lot', 'total_profit',
                                        'pct_total_profit',
                                        'total_volume', 'pct_total_volume',
-                                       'impact_on_PnL_1$_increase_of_weighted+spread'])
+                                       'pct_impact_on_PnL_exec_spread'])
 
         row_offset += 1
 
