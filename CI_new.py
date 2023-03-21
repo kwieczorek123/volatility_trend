@@ -79,7 +79,7 @@ for symbol in list_of_symbols:
     start_date = None
     mid_date = None
     finish_date = None
-    time_filter = 3
+    time_filter = 7
     first_treshold_filter = 50
 
     # Find periods of trending market
@@ -117,8 +117,8 @@ for symbol in list_of_symbols:
                 if next_row < len(df):
                     df.loc[df.index[next_row]:, 'trend_in_progress'] = 0
             else:
-                # If CI goes below the first_treshold_filter in the time_filter period, mark trend=0.5 and trend_in_progress
-                # = 0.5 until first_filter_date
+                # If CI goes below the first_treshold_filter in the time_filter period, mark trend=0.5 and
+                # trend_in_progress = 0.5 until first_filter_date
                 for j in range(i + 1, df.index.get_loc(first_filter_date) + 1):
                     df.loc[df.index[j], 'trend'] = 0.5
                     df.loc[df.index[j], 'trend_in_progress'] = 0.5
