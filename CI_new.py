@@ -98,7 +98,30 @@ for symbol in list_of_symbols:
             df.loc[df.index[i], 'trend_in_progress'] = 0.5
 
             # Check if CI goes below the first_treshold_filter within the time_filter period
-            df = check_below_first_treshold_filter(df, i, time_filter, first_treshold_filter)
+            below_first_treshold_filter = False
+            first_filter_date = None
+            for j in range(i + 1, min(i + time_filter + 1, len(df))):
+                if df['CI'].iloc[j] < first_treshold_filter:
+                    below_first_treshold_filter = True
+                    first_filter_date = df.index[j]
+                    break
+
+            if not below_first_treshold_filter:
+                # If CI doesn't go below the first_treshold_filter in the time_filter period
+                mid_date = df.index[min(i + time_filter, len(df) - 1)]
+                finish_date = mid_date
+
+                # Mark trend and trend_in_progress as 0
+                df.loc[start_date:finish_date, 'trend'] = 0
+                next_row = df.index.get_loc(mid_date) + 1
+                if next_row < len(df):
+                    df.loc[df.index[next_row]:, 'trend_in_progress'] = 0
+            else:
+                # If CI goes below the first_treshold_filter in the time_filter period, mark trend=0.5 and trend_in_progress
+                # = 0.5 until first_filter_date
+                for j in range(i + 1, df.index.get_loc(first_filter_date) + 1):
+                    df.loc[df.index[j], 'trend'] = 0.5
+                    df.loc[df.index[j], 'trend_in_progress'] = 0.5
 
 
         # Options after point 2

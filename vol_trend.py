@@ -6,8 +6,6 @@ from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
 # Define file names for input data
-"""file_names = ['vol_trend_data/EURUSD_chop.csv', 'vol_trend_data/GBPUSD_chop.csv', 'vol_trend_data/USDJPY_chop.csv',
-              'vol_trend_data/XAUUSD_chop.csv']"""
 file_names = ['processed_CI_data/EURUSD_CI.csv', 'processed_CI_data/GBPUSD_CI.csv', 'processed_CI_data/USDJPY_CI.csv',
               'processed_CI_data/XAUUSD_CI.csv']
 spread_all_symbols_file = 'vol_trend_data/spread_all_symbol.csv'
