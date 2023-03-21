@@ -43,11 +43,17 @@ def filter_date_range(df, start_date, end_date):
 # Function to mark volatility trend in the input DataFrame
 def mark_volatility_trend(df):
     df['Volatility_Trend'] = df.apply(
-        lambda row: 'High Volatility + Trend' if row['Volatility_status'] == 'High_Volatility' and row[
-            'trend'] == 1
-        else ('High Volatility + No Trend' if row['Volatility_status'] == 'High_Volatility' and row['trend'] != 1
-              else ('Low Volatility + Trend' if row['Volatility_status'] == 'Low_Volatility' and row['trend'] == 1
-                    else 'Low Volatility + No Trend')), axis=1)
+        lambda row: 'High Volatility + Trend' if row['Volatility_status'] == 'High_Volatility' and row['trend'] == 1
+        else ('High Volatility + Trend False' if row['Volatility_status'] == 'High_Volatility' and row['trend'] == 0 and
+                                                 row['trend_in_progress'] == 0.5
+              else (
+            'High Volatility + No Trend' if row['Volatility_status'] == 'High_Volatility' and row['trend'] == 0 and row[
+                'trend_in_progress'] == 0
+            else ('Low Volatility + Trend' if row['Volatility_status'] == 'Low_Volatility' and row['trend'] == 1
+                  else (
+                'Low Volatility + Trend False' if row['Volatility_status'] == 'Low_Volatility' and row['trend'] == 0 and
+                                                  row['trend_in_progress'] == 0.5
+                else 'Low Volatility + No Trend')))), axis=1)
     return df
 
 

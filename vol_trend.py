@@ -6,8 +6,10 @@ from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
 # Define file names for input data
-file_names = ['vol_trend_data/EURUSD_chop.csv', 'vol_trend_data/GBPUSD_chop.csv', 'vol_trend_data/USDJPY_chop.csv',
-              'vol_trend_data/XAUUSD_chop.csv']
+"""file_names = ['vol_trend_data/EURUSD_chop.csv', 'vol_trend_data/GBPUSD_chop.csv', 'vol_trend_data/USDJPY_chop.csv',
+              'vol_trend_data/XAUUSD_chop.csv']"""
+file_names = ['processed_CI_data/EURUSD_CI.csv', 'processed_CI_data/GBPUSD_CI.csv', 'processed_CI_data/USDJPY_CI.csv',
+              'processed_CI_data/XAUUSD_CI.csv']
 spread_all_symbols_file = 'vol_trend_data/spread_all_symbol.csv'
 execution_spread_file = 'vol_trend_data/execution_spread.csv'
 pnl_files = ['vol_trend_data/EURUSD_pnl.csv', 'vol_trend_data/GBPUSD_pnl.csv', 'vol_trend_data/USDJPY_pnl.csv',
@@ -18,7 +20,7 @@ pnl_df_dict = {symbol: pd.read_csv(pnl_file, parse_dates=['day']) for pnl_file, 
                zip(pnl_files, ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'])}
 
 # Define date range and rolling window length
-start_date = '2021-01-01'
+start_date = '2020-01-01'
 end_date = '2023-02-28'
 roll = 252
 start_date_long = '2015-01-01'
@@ -99,7 +101,7 @@ def process_csv(file_name, start_date, end_date, spread_df, execution_df, pnl_df
     output_dir = "processed_vol_trend_data"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    output_file_name = os.path.basename(file_name).replace("_chop", "_vol_trend")  # Replace '_chop' with '_vol_trend'
+    output_file_name = os.path.basename(file_name).replace("_CI", "_vol_trend")  # Replace '_chop' with '_vol_trend'
     output_file_path = os.path.join(output_dir, f'processed_{output_file_name}')
     df.to_csv(output_file_path, index=False)
     print(f"Processed {file_name}")
@@ -115,7 +117,7 @@ def process_csv_long(file_name, start_date, end_date):
     output_dir = "processed_vol_trend_data_long"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    output_file_name = os.path.basename(file_name).replace("_chop", "_vol_trend_long")
+    output_file_name = os.path.basename(file_name).replace("_CI", "_vol_trend_long")
     output_file_path = os.path.join(output_dir, f'processed_{output_file_name}')
     df.to_csv(output_file_path, index=False)
     print(f"Processed {file_name}")

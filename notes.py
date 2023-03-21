@@ -1,10 +1,7 @@
 """
 
-2. amend the chop to account for trend in progress
-
 - create a logic for counting failed trend in process entries and impact on pivots (how many were there, what was their
 impact on pivots), calculate the separate metric for them in pivots
-- create different pivots with adjustments done to CI formula, and compare whether it is beneficial to have them
 
 1. benchmark
 
