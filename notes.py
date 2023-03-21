@@ -1,7 +1,6 @@
 """
 
-- create a logic for counting failed trend in process entries and impact on pivots (how many were there, what was their
-impact on pivots), calculate the separate metric for them in pivots
+- works fine, but either highlights trend as 0.5, or removes almost all entries from trend in progress
 
 1. benchmark
 
