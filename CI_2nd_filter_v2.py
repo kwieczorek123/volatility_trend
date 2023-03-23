@@ -35,73 +35,13 @@ for symbol in list_of_symbols:
         returns the updated DataFrame.
         """
         df.loc[start_date:mid_date, 'trend'] = 1
+        df.loc[start_date:mid_date, 'trend_in_progress'] = 0.5
         df.loc[df.index[df.index.get_loc(mid_date):], 'trend_in_progress'] = 0
         if finish_date is not None:
+            df.loc[mid_date:finish_date, 'trend'] = 1
             df.loc[df.index[df.index.get_loc(finish_date):], 'trend'] = 0
             df.loc[df.index[df.index.get_loc(finish_date):], 'trend_in_progress'] = 0
         return df
-
-
-    def check_below_first_treshold_filter(df, i, time_filter, first_treshold_filter, second_time_filter,
-                                          second_treshold_filter):
-        # Check if CI goes below the first_treshold_filter within the time_filter period
-        below_first_treshold_filter = False
-        first_filter_date = None
-        for j in range(i + 1, min(i + time_filter + 1, len(df))):
-            if df['CI'].iloc[j] < first_treshold_filter:
-                below_first_treshold_filter = True
-                first_filter_date = df.index[j]
-                break
-
-        if not below_first_treshold_filter:
-            # If CI doesn't go below the first_treshold_filter in the time_filter period
-            finish_date = df.index[min(i + time_filter, len(df) - 1)]
-            if j < i + time_filter:
-                # The loop did not go through time_filter rows
-                # Leave the trend column as 0.5 for the remaining rows
-                df.loc[df.index[i:], 'trend'] = 0.5
-            else:
-                # The loop went through time_filter rows
-                df.loc[df.index[i]:finish_date, 'trend'] = 0
-                df.loc[df.index[df.index.get_loc(finish_date)], 'trend_in_progress'] = 0
-        else:
-            # If CI goes below the first_treshold_filter in the time_filter period
-            for j in range(i + 1, df.index.get_loc(first_filter_date) + 1):
-                df.loc[df.index[j], 'trend'] = 0.5
-                df.loc[df.index[j], 'trend_in_progress'] = 0.5
-
-            # Check if CI goes below the second_treshold_filter within the second_time_filter period
-            below_second_treshold_filter = False
-            second_filter_date = None
-            for j in range(df.index.get_loc(first_filter_date) + 1,
-                           min(df.index.get_loc(first_filter_date) + second_time_filter + 1, len(df))):
-                if df['CI'].iloc[j] < second_treshold_filter:
-                    below_second_treshold_filter = True
-                    second_filter_date = df.index[j]
-                    break
-
-            if not below_second_treshold_filter:
-                # If CI doesn't go below the second_treshold_filter in the second_time_filter period
-                finish_date = df.index[min(df.index.get_loc(first_filter_date) + second_time_filter, len(df) - 1)]
-                if j < df.index.get_loc(first_filter_date) + second_time_filter:
-                    # The loop did not go through second_time_filter rows
-                    # Leave the trend column as 0.5 for the remaining rows
-                    df.loc[df.index[df.index.get_loc(first_filter_date):], 'trend'] = 0.5
-                else:
-                    # The loop went through second_time_filter rows
-                    df.loc[df.index[df.index.get_loc(first_filter_date)]:finish_date, 'trend'] = 0
-                    df.loc[df.index[df.index.get_loc(finish_date)], 'trend_in_progress'] = 0
-            else:
-                # If CI goes below the second_treshold_filter in the second_time_filter period
-                for j in range(df.index.get_loc(first_filter_date) + 1, df.index.get_loc(second_filter_date) + 1):
-                    df.loc[df.index[j], 'trend'] = 0.5
-
-            # Change the values in trend column to 0, when trend didn't materialize
-            last_zero_index = df[df['trend_in_progress'] == 0].index[-1]
-            df.loc[((df.index < last_zero_index) | (df.index > last_zero_index)) & (df['trend'] == 0.5), 'trend'] = 0
-
-        return df
-
 
     # Initialize trend, trend_in_progress columns with all zeros
     df['trend'] = 0
