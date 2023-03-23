@@ -44,22 +44,6 @@ for symbol in list_of_symbols:
 
     def check_below_first_treshold_filter(df, i, time_filter, first_treshold_filter, second_time_filter,
                                           second_treshold_filter):
-        """It initializes two variables: below_first_treshold_filter and first_filter_date.
-        below_first_treshold_filter is a boolean flag that indicates whether the 'CI' values have gone below the
-        threshold, and first_filter_date is the first date when the 'CI' values went below the threshold. It then
-        iterates over the next time_filter rows (or until the end of the DataFrame, whichever comes first) using a
-        for loop with a range of indices starting from i+1 and ending at min(i+time_filter+1, len(df)). The min()
-        function ensures that the loop does not go beyond the end of the DataFrame. For each row, the code checks if
-        the 'CI' value is less than first_treshold_filter. If it is, the below_first_treshold_filter flag is set to
-        True, and first_filter_date is set to the date of the current row (df.index[j]). The loop is then broken
-        using the break statement. After the for loop, the code checks if below_first_treshold_filter is False using
-        an if statement. If it is, it means that the 'CI' values did not go below the threshold during the
-        time_filter period. In this case, the code sets the 'trend' column to 0 for the current row and for all rows
-        up to finish_date, which is calculated as the minimum of i + time_filter and len(df)-1. The
-        'trend_in_progress' column is also set to 0 for the row at finish_date. If below_first_treshold_filter is
-        True, it means that the 'CI' values went below the threshold during the time_filter period. In this case,
-        the code iterates over the rows between i+1 and the index of first_filter_date, setting the 'trend' and
-        'trend_in_progress' columns to 0.5."""
         # Check if CI goes below the first_treshold_filter within the time_filter period
         below_first_treshold_filter = False
         first_filter_date = None
