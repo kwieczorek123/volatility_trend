@@ -115,9 +115,9 @@ for symbol in list_of_symbols:
     start_date = None
     mid_date = None
     finish_date = None
-    time_filter = 7
+    time_filter = 3
     first_treshold_filter = 50
-    second_time_filter = 7
+    second_time_filter = 3
     second_treshold_filter = 45
 
     # Find periods of trending market
@@ -127,44 +127,6 @@ for symbol in list_of_symbols:
             start_date, mid_date, finish_date = None, None, None
             df.loc[df.index[i], 'trend'] = 0
             df.loc[df.index[i], 'trend_in_progress'] = 0
-
-        elif df['CI'].iloc[i] < lower_band:
-            # Mark the start of a new trend
-            df.loc[df.index[i], 'trend'] = 1
-            df.loc[df.index[i], 'trend_in_progress'] = 0
-            start_date = df.index[i]
-            mid_date = df.index[i]
-            end_date = None
-
-            # Loop through rows after mid_date to find when the CI goes back above lower_band
-            for j in range(df.index.get_loc(mid_date) + 1, len(df)):
-                if df['CI'].iloc[j] > lower_band:
-                    finish_date = df.index[j]
-                    break
-                else:
-                    df.loc[df.index[j], 'trend'] = 1
-                    df.loc[df.index[j], 'trend_in_progress'] = 0
-
-            # Set the trend and trend_in_progress to 0 from finish_date onwards
-            if finish_date is not None:
-                df = update_trend(df, start_date, mid_date, finish_date)
-
-                # Scan for the next rows after the finish date
-                for k in range(df.index.get_loc(finish_date) + 1,
-                               min(df.index.get_loc(finish_date) + reloop_lenght + 1, len(df))):
-                    if df['CI'].iloc[k] < lower_band:
-                        start_date = mid_date = df.index[k]
-                        df = update_trend(df, start_date, mid_date, None)
-
-                        # Loop through rows after new_mid_date to find when the CI goes back above lower_band
-                        for l in range(df.index.get_loc(mid_date) + 1, len(df)):
-                            if df['CI'].iloc[l] > lower_band:
-                                finish_date = df.index[l]
-                                df = update_trend(df, start_date, mid_date, finish_date)
-                                break
-                            else:
-                                df.loc[df.index[l], 'trend'] = 1
-                                df.loc[df.index[l], 'trend_in_progress'] = 0
 
         # 2. When the CI is below upper_band and was above upper_band in the previous row, we mark a start_date and
         # set trend and trend_in_progress to 0.5
