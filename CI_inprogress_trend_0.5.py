@@ -30,10 +30,10 @@ for symbol in list_of_symbols:
     df['trend'] = 0
     df['trend_in_progress'] = 0
 
-    upper_band = 61.8
-    lower_band = 38.2
+    upper_band = 57
+    lower_band = 40
 
-    length = 22
+    length = 15
     start_date = None
     mid_date = None
     finish_date = None
@@ -93,5 +93,4 @@ for symbol in list_of_symbols:
                 df.loc[df.index[df.index.get_loc(mid_date)]:, 'trend_in_progress'] = 0
 
     # Save the results to a CSV file
-
     df.to_csv(f'processed_CI_data/{symbol}_CI.csv')

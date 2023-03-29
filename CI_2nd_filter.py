@@ -111,7 +111,7 @@ for symbol in list_of_symbols:
     upper_band = 57
     lower_band = 40
     length = 20
-    reloop_lenght = 10
+    reloop_lenght = 15
     start_date = None
     mid_date = None
     finish_date = None

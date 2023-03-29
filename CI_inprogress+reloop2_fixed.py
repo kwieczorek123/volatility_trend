@@ -3,6 +3,10 @@ import numpy as np
 
 list_of_symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD']
 
+"""
+reloop works 2 times
+"""
+
 for symbol in list_of_symbols:
 
     # Read in the data
@@ -36,68 +40,18 @@ for symbol in list_of_symbols:
         return df
 
 
-    def check_below_first_treshold_filter(df, i, time_filter, first_treshold_filter, second_time_filter,
-                                          second_treshold_filter):
-        # Check if CI goes below the first_treshold_filter within the time_filter period
-        below_first_treshold_filter = False
-        first_filter_date = None
-        for j in range(i + 1, min(i + time_filter + 1, len(df))):
-            if df['CI'].iloc[j] < first_treshold_filter:
-                below_first_treshold_filter = True
-                first_filter_date = df.index[j]
-                break
-
-        if not below_first_treshold_filter:
-            # If CI doesn't go below the first_treshold_filter in the time_filter period
-            finish_date = df.index[min(i + time_filter, len(df) - 1)]
-            df.loc[df.index[i]:finish_date, 'trend'] = 0
-            df.loc[df.index[df.index.get_loc(finish_date)], 'trend_in_progress'] = 0
-        else:
-            # If CI goes below the first_treshold_filter in the time_filter period
-            for j in range(i + 1, df.index.get_loc(first_filter_date) + 1):
-                df.loc[df.index[j], 'trend'] = 0.5
-                df.loc[df.index[j], 'trend_in_progress'] = 0.5
-
-            # Check if CI goes below the second_treshold_filter within the second_time_filter period
-            below_second_treshold_filter = False
-            second_filter_date = None
-            for j in range(df.index.get_loc(first_filter_date) + 1,
-                           min(df.index.get_loc(first_filter_date) + second_time_filter + 1, len(df))):
-                if df['CI'].iloc[j] < second_treshold_filter:
-                    below_second_treshold_filter = True
-                    second_filter_date = df.index[j]
-                    break
-
-            if not below_second_treshold_filter:
-                # If CI doesn't go below the second_treshold_filter in the second_time_filter period
-                finish_date = df.index[min(df.index.get_loc(first_filter_date) + second_time_filter, len(df) - 1)]
-                df.loc[df.index[df.index.get_loc(first_filter_date)]:finish_date, 'trend'] = 0
-                df.loc[df.index[df.index.get_loc(finish_date)], 'trend_in_progress'] = 0
-            else:
-                # If CI goes below the second_treshold_filter in the second_time_filter period
-                for j in range(df.index.get_loc(first_filter_date) + 1, df.index.get_loc(second_filter_date) + 1):
-                    df.loc[df.index[j], 'trend'] = 0.5
-                    df.loc[df.index[j], 'trend_in_progress'] = 0.5
-
-        return df
-
-
     # Initialize trend, trend_in_progress columns with all zeros
     df['trend'] = 0
     df['trend_in_progress'] = 0
 
-    # Define constants
     upper_band = 57
     lower_band = 40
-    length = 20
+
+    length = 22
     reloop_lenght = 10
     start_date = None
     mid_date = None
     finish_date = None
-    time_filter = 7
-    first_treshold_filter = 50
-    second_time_filter = 7
-    second_treshold_filter = 45
 
     # Find periods of trending market
     for i in range(1, len(df)):
@@ -107,64 +61,18 @@ for symbol in list_of_symbols:
             df.loc[df.index[i], 'trend'] = 0
             df.loc[df.index[i], 'trend_in_progress'] = 0
 
-        # 2. When the CI is below upper_band and was above upper_band in the previous row, we mark a start_date and
+        # + 2. When the CI is below upper_band and was above upper_band in the previous row, we mark a start_date and
         # set trend and trend_in_progress to 0.5
         elif df['CI'].iloc[i] < upper_band <= df['CI'].iloc[i - 1] and start_date is None:
             start_date = df.index[i]
             df.loc[df.index[i], 'trend'] = 0.5
             df.loc[df.index[i], 'trend_in_progress'] = 0.5
 
-            # Check if CI goes below the first_treshold_filter within the time_filter period
-            below_first_treshold_filter = False
-            first_filter_date = None
-            for j in range(i + 1, min(i + time_filter + 1, len(df))):
-                if df['CI'].iloc[j] < first_treshold_filter:
-                    below_first_treshold_filter = True
-                    first_filter_date = df.index[j]
-                    break
-
-            if not below_first_treshold_filter:
-                # If CI doesn't go below the first_treshold_filter in the time_filter period
-                mid_date = finish_date = first_filter_date
-
-                # Mark trend as 0 and leave trend_in_progress as 0.5 from start_date to finish_date
-                df.loc[start_date:finish_date, 'trend'] = 0
-                df.loc[finish_date, 'trend_in_progress'] = 0
-            else:
-                # If CI goes below the first_treshold_filter in the time_filter period
-                # Check if CI goes below the second_treshold_filter within the second_time_filter period
-                below_second_treshold_filter = False
-                second_filter_date = None
-                for j in range(df.index.get_loc(first_filter_date) + 1,
-                               min(df.index.get_loc(first_filter_date) + second_time_filter + 1, len(df))):
-                    if df['CI'].iloc[j] < second_treshold_filter:
-                        below_second_treshold_filter = True
-                        second_filter_date = df.index[j]
-                        break
-
-                if not below_second_treshold_filter:
-                    # If CI doesn't go below the second_treshold_filter in the second_time_filter period
-                    finish_date = second_filter_date
-
-                    # Mark trend as 0 and leave trend_in_progress as 0.5 from start_date to finish_date
-                    df.loc[start_date:finish_date, 'trend'] = 0
-                    df.loc[finish_date, 'trend_in_progress'] = 0
-                else:
-                    # If CI goes below the second_treshold_filter in the second_time_filter period
-                    # Continue looping for CI to go below lower_band
-                    pass
-
-
-
         # Options after point 2
         elif start_date is not None and mid_date is None:
             # Update trend and trend_in_progress columns for the current row
             df.loc[df.index[i], 'trend'] = 0.5
             df.loc[df.index[i], 'trend_in_progress'] = 0.5
-
-            # Check if CI goes below the first_treshold_filter within the time_filter period
-            df = check_below_first_treshold_filter(df, i, time_filter, first_treshold_filter, second_time_filter,
-                                                   second_treshold_filter)
 
             # Option 1: CI goes below lower_band
             if df['CI'].iloc[i] < lower_band and mid_date is None:
@@ -184,11 +92,11 @@ for symbol in list_of_symbols:
                 if finish_date is not None:
                     df = update_trend(df, start_date, mid_date, finish_date)
 
-                    # Scan for the next 10 rows after the finish date
-                    for k in range(df.index.get_loc(finish_date) + 1,
-                                   min(df.index.get_loc(finish_date) + reloop_lenght + 1, len(df))):
+                    # Scan for the next reloop_lenght rows after the finish date
+                    for k in range(df.index.get_loc(finish_date) + 1, min(df.index.get_loc(finish_date) + reloop_lenght
+                                                                          + 1, len(df))):
                         if df['CI'].iloc[k] < lower_band:
-                            new_start_date = finish_date
+                            new_start_date = df.index[k]
                             new_mid_date = df.index[k]
                             df = update_trend(df, new_start_date, new_mid_date, None)
 
@@ -202,6 +110,26 @@ for symbol in list_of_symbols:
                                     df.loc[df.index[l], 'trend_in_progress'] = 0
                             break
 
+                if new_finish_date is not None:
+
+                        # Add another loop to check once more after reloop_lenght is satisfied
+                        for k in range(df.index.get_loc(finish_date) + 1, min(df.index.get_loc(finish_date) + reloop_lenght
+                                                                              + 1, len(df))):
+                            if df['CI'].iloc[k] < lower_band:
+                                new_start_date = df.index[k]
+                                new_mid_date = df.index[k]
+                                df = update_trend(df, new_start_date, new_mid_date, None)
+
+                                # Loop through rows after new_mid_date to find when the CI goes back above lower_band
+                                for l in range(df.index.get_loc(new_mid_date) + 1, len(df)):
+                                    if df['CI'].iloc[l] > lower_band:
+                                        new_finish_date = df.index[l]
+                                        break
+                                    else:
+                                        df.loc[df.index[l], 'trend'] = 1
+                                        df.loc[df.index[l], 'trend_in_progress'] = 0
+                                break
+
             # Option 2: CI goes above upper_band before going below lower_band
             elif df['CI'].iloc[i] > upper_band:
                 mid_date, finish_date = df.index[i], df.index[i]
@@ -214,8 +142,7 @@ for symbol in list_of_symbols:
                 df.loc[start_date:finish_date, 'trend'] = 0
                 df.loc[df.index[df.index.get_loc(mid_date)]:, 'trend_in_progress'] = 0
 
-    # This part ensures that any trends that might have been missed or continued after the main loop has completed are
-    # properly labeled
+    # Add the new loop for additional logic
     current_trend_start = None
     for i in range(len(df)):
         # If trend is 1 and trend_in_progress is 0, we have a finished trend
@@ -239,7 +166,7 @@ for symbol in list_of_symbols:
             else:
                 current_trend_start = None
 
-    # Change the values in trend column to 0, when trend didn't materialize
+    # Add the code snippet after the main loop
     last_zero_index = df[df['trend_in_progress'] == 0].index[-1]
     df.loc[(df.index < last_zero_index) & (df['trend'] == 0.5), 'trend'] = 0
 
