@@ -19,7 +19,7 @@ pnl_df_dict = {symbol: pd.read_csv(pnl_file, parse_dates=['day']) for pnl_file, 
 
 # Define date range and rolling window length
 start_date = '2020-01-01'
-end_date = '2023-02-28'
+end_date = '2023-03-30'
 roll = 252
 start_date_long = '2015-01-01'
 end_date_long = '2022-12-31'
@@ -76,15 +76,6 @@ def add_spread_columns(df, spread_df, execution_df, symbol):
 
 
 # Function to add PnL per lot column to the input DataFrame
-def add_pnl_per_lot_column(df, pnl_df, symbol):
-    df = df.merge(pnl_df.loc[pnl_df['symbol_name'] == symbol, ['day', 'PnL/Lot']], left_on='date', right_on='day',
-                  how='left')
-    df = df.rename(columns={'PnL/Lot': 'PnL_per_lot'})
-    df.drop(columns=['day'], inplace=True)
-    return df
-
-
-# Modify the add_pnl_per_lot_column function to add the 'profit' and 'volume' columns
 def add_pnl_per_lot_column(df, pnl_df, symbol):
     df = df.merge(pnl_df.loc[pnl_df['symbol_name'] == symbol, ['day', 'PnL/Lot', 'profit', 'volume']],
                   left_on='date', right_on='day', how='left')

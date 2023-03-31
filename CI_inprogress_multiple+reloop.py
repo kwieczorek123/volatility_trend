@@ -3,10 +3,6 @@ import numpy as np
 
 list_of_symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD']
 
-"""
-multiple reloop works
-"""
-
 for symbol in list_of_symbols:
 
     # Read in the data
@@ -44,11 +40,11 @@ for symbol in list_of_symbols:
     df['trend'] = 0
     df['trend_in_progress'] = 0
 
-    upper_band = 57
+    upper_band = 60
     lower_band = 40
 
     length = 22
-    reloop_lenght = 10
+    reloop_lenght = 22
     start_date = None
     mid_date = None
     finish_date = None

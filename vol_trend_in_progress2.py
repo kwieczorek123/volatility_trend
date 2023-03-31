@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
@@ -18,7 +19,7 @@ pnl_df_dict = {symbol: pd.read_csv(pnl_file, parse_dates=['day']) for pnl_file, 
                zip(pnl_files, ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'])}
 
 # Define date range and rolling window length
-start_date = '2023-01-01'
+start_date = '2020-01-01'
 end_date = '2023-03-30'
 roll = 252
 start_date_long = '2015-01-01'
@@ -43,11 +44,17 @@ def filter_date_range(df, start_date, end_date):
 # Function to mark volatility trend in the input DataFrame
 def mark_volatility_trend(df):
     df['Volatility_Trend'] = df.apply(
-        lambda row: 'High Volatility + Trend' if row['Volatility_status'] == 'High_Volatility' and row[
-            'trend'] == 1
-        else ('High Volatility + No Trend' if row['Volatility_status'] == 'High_Volatility' and row['trend'] != 1
-              else ('Low Volatility + Trend' if row['Volatility_status'] == 'Low_Volatility' and row['trend'] == 1
-                    else 'Low Volatility + No Trend')), axis=1)
+        lambda row: 'High Volatility + Trend' if row['Volatility_status'] == 'High_Volatility' and row['trend'] == 1
+        else ('High Volatility + Trend False' if row['Volatility_status'] == 'High_Volatility' and row['trend'] == 0 and
+                                                 row['trend_in_progress'] == 0.5
+              else (
+            'High Volatility + No Trend' if row['Volatility_status'] == 'High_Volatility' and row['trend'] == 0 and row[
+                'trend_in_progress'] == 0
+            else ('Low Volatility + Trend' if row['Volatility_status'] == 'Low_Volatility' and row['trend'] == 1
+                  else (
+                'Low Volatility + Trend False' if row['Volatility_status'] == 'Low_Volatility' and row['trend'] == 0 and
+                                                  row['trend_in_progress'] == 0.5
+                else 'Low Volatility + No Trend')))), axis=1)
     return df
 
 
@@ -69,7 +76,7 @@ def add_spread_columns(df, spread_df, execution_df, symbol):
     return df
 
 
-# Modify the add_pnl_per_lot_column function to add the 'profit' and 'volume' columns
+# Function to add PnL per lot column to the input DataFrame
 def add_pnl_per_lot_column(df, pnl_df, symbol):
     df = df.merge(pnl_df.loc[pnl_df['symbol_name'] == symbol, ['day', 'PnL/Lot', 'profit', 'volume']],
                   left_on='date', right_on='day', how='left')
@@ -87,7 +94,7 @@ def process_csv(file_name, start_date, end_date, spread_df, execution_df, pnl_df
     df = mark_volatility_trend(df)
     df = add_spread_columns(df, spread_df, execution_df, symbol)
     df = add_pnl_per_lot_column(df, pnl_df_dict[symbol], symbol)
-    output_dir = "processed_vol_trend_data"
+    output_dir = "processed_CI_test_data"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     output_file_name = os.path.basename(file_name).replace("_CI", "_vol_trend")  # Replace '_chop' with '_vol_trend'
@@ -103,13 +110,26 @@ def process_csv_long(file_name, start_date, end_date):
     df = filter_date_range(df, start_date, end_date)
     df = mark_volatility_trend(df)
 
-    output_dir = "processed_vol_trend_data_long"
+    output_dir = "processed_CI_test_data"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     output_file_name = os.path.basename(file_name).replace("_CI", "_vol_trend_long")
     output_file_path = os.path.join(output_dir, f'processed_{output_file_name}')
     df.to_csv(output_file_path, index=False)
     print(f"Processed {file_name}")
+
+
+def calculate_volume_weighted_avg_spread(combined_df):
+    symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD']
+    volume_weighted_avg_spreads = {}
+
+    for symbol in symbols:
+        symbol_df = combined_df[combined_df['symbol'] == symbol]
+        weighted_spread_by_volume = symbol_df['weighted_avg_execution_spread_$'] * symbol_df['total_volume']
+        volume_weighted_avg_spread = weighted_spread_by_volume.sum() / symbol_df['total_volume'].sum()
+        volume_weighted_avg_spreads[symbol] = volume_weighted_avg_spread
+
+    return volume_weighted_avg_spreads
 
 
 # Read input data from the spread and execution files
@@ -144,14 +164,20 @@ def create_pivot_tables_and_charts(processed_files):
 
         symbol_df = combined_df[combined_df['symbol'] == symbol]
 
+        # Calculate the weighted_spread_by_volume column
+        symbol_df = symbol_df.copy()  # Create a copy of the DataFrame to avoid SettingWithCopyWarning
+        symbol_df['weighted_spread_by_volume'] = symbol_df['weighted_avg_execution_spread_$'] * symbol_df[
+            'total_volume']
+
         pivot = pd.pivot_table(symbol_df, index='Volatility_Trend',
                                values=['typical_spread_in_points', 'weighted_avg_execution_spread_$',
-                                       'PnL_per_lot', 'total_profit', 'total_volume'],
+                                       'PnL_per_lot', 'total_profit', 'total_volume', 'weighted_spread_by_volume'],
                                aggfunc={'typical_spread_in_points': 'mean',
                                         'weighted_avg_execution_spread_$': 'mean',
                                         'PnL_per_lot': ['mean', 'count'],
                                         'total_profit': 'sum',
-                                        'total_volume': 'sum'})
+                                        'total_volume': 'sum',
+                                        'weighted_spread_by_volume': 'sum'})
 
         pivot.columns = ['_'.join(col).strip() if col[-1] == 'count' else col[0] for col in pivot.columns.values]
         pivot.rename(columns={'PnL_per_lot_count': 'count_of_occurrences'}, inplace=True)
@@ -163,13 +189,20 @@ def create_pivot_tables_and_charts(processed_files):
         # Change the calculation for the PnL_per_lot column
         pivot['PnL_per_lot'] = pivot['total_profit'] / pivot['total_volume']
 
-        # Add the pct_impact_on_PnL_weighted_spread column
+        # Add the pct_impact_on_PnL_exec_spread column
         pivot['pct_impact_on_PnL_exec_spread'] = abs(pivot['total_volume'] / pivot['total_profit'])
 
-        # Rearrange the columns
-        pivot = pivot.reindex(columns=['count_of_occurrences', 'percentage_of_occurrences', 'typical_spread_in_points',
-                                       'weighted_avg_execution_spread_$', 'PnL_per_lot', 'total_profit',
-                                       'total_volume', 'pct_impact_on_PnL_exec_spread'])
+        # Calculate the volume_weighted_avg_spread_in_USD
+        grouped_symbol_df = symbol_df.groupby('Volatility_Trend')
+
+        volume_weighted_avg_spread = {}
+        for name, group in grouped_symbol_df:
+            weighted_spread_by_volume = group['weighted_avg_execution_spread_$'] * group['total_volume']
+            volume_weighted_avg_spread[name] = weighted_spread_by_volume.sum() / group['total_volume'].sum()
+
+        # Add the volume_weighted_avg_spread_in_USD column to the pivot table
+        for index in pivot.index:
+            pivot.loc[index, 'volume_weighted_avg_spread_in_USD'] = volume_weighted_avg_spread.get(index, np.nan)
 
         # Calculate the percentage of total_profit and total_volume for each Volatility_Trend
         total_profit = pivot['total_profit'].sum()
@@ -178,11 +211,11 @@ def create_pivot_tables_and_charts(processed_files):
         pivot['pct_total_volume'] = pivot['total_volume'] / total_volume * 100
 
         # Insert the new columns after total_profit and total_volume
-        pivot = pivot.reindex(columns=['count_of_occurrences', 'percentage_of_occurrences', 'typical_spread_in_points',
-                                       'weighted_avg_execution_spread_$', 'PnL_per_lot', 'total_profit',
-                                       'pct_total_profit',
-                                       'total_volume', 'pct_total_volume',
-                                       'pct_impact_on_PnL_exec_spread'])
+        pivot = pivot.reindex(
+            columns=['count_of_occurrences', 'percentage_of_occurrences', 'typical_spread_in_points',
+                     'weighted_avg_execution_spread_$', 'volume_weighted_avg_spread_in_USD', 'PnL_per_lot',
+                     'total_profit', 'pct_total_profit', 'total_volume', 'pct_total_volume',
+                     'pct_impact_on_PnL_exec_spread'])
 
         row_offset += 1
 
@@ -197,7 +230,7 @@ def create_pivot_tables_and_charts(processed_files):
             length = max(len(str(cell.value)) for cell in column_cells)
             ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
 
-        wb.save("processed_vol_trend_data/pivots.xlsx")
+    wb.save("processed_CI_test_data/pivots_CI_test.xlsx")
 
 
 def create_pivot_tables_and_charts_long(processed_files):
@@ -252,20 +285,20 @@ def create_pivot_tables_and_charts_long(processed_files):
             length = max(len(str(cell.value)) for cell in column_cells)
             ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
 
-    wb.save("processed_vol_trend_data_long/pivots_long.xlsx")
+    wb.save("processed_CI_test_data/pivots_long_CI_test.xlsx")
 
 
 # Add this line to the end of your script to call the function
 create_pivot_tables_and_charts([
-    "processed_vol_trend_data/processed_EURUSD_vol_trend.csv",
-    "processed_vol_trend_data/processed_GBPUSD_vol_trend.csv",
-    "processed_vol_trend_data/processed_USDJPY_vol_trend.csv",
-    "processed_vol_trend_data/processed_XAUUSD_vol_trend.csv"
+    "processed_CI_test_data/processed_EURUSD_vol_trend.csv",
+    "processed_CI_test_data/processed_GBPUSD_vol_trend.csv",
+    "processed_CI_test_data/processed_USDJPY_vol_trend.csv",
+    "processed_CI_test_data/processed_XAUUSD_vol_trend.csv"
 ])
 
 create_pivot_tables_and_charts_long([
-    "processed_vol_trend_data_long/processed_EURUSD_vol_trend_long.csv",
-    "processed_vol_trend_data_long/processed_GBPUSD_vol_trend_long.csv",
-    "processed_vol_trend_data_long/processed_USDJPY_vol_trend_long.csv",
-    "processed_vol_trend_data_long/processed_XAUUSD_vol_trend_long.csv"
+    "processed_CI_test_data/processed_EURUSD_vol_trend_long.csv",
+    "processed_CI_test_data/processed_GBPUSD_vol_trend_long.csv",
+    "processed_CI_test_data/processed_USDJPY_vol_trend_long.csv",
+    "processed_CI_test_data/processed_XAUUSD_vol_trend_long.csv"
 ])
