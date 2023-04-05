@@ -3,7 +3,7 @@ import mplfinance as mpf
 import matplotlib.pyplot as plt
 
 
-# Define a function to read in the price data from CSV files
+# Define a function to read in the price OHLC_data from CSV files
 def read_data(file, pnl=False):
     # Read in the CSV file and set the index to the datetime column
     df = pd.read_csv(file, index_col=0, parse_dates=True)
@@ -52,7 +52,7 @@ def calculate_weights_volume(volume_data, close_data, lot_size):
     volume_month_end = {}
 
     for date, close_price in last_close_dates_prices.items():
-        # Create a mask to filter the volume data up to the current month-end
+        # Create a mask to filter the volume OHLC_data up to the current month-end
         mask = (volume_data.index <= date)
         filtered_volume_data = volume_data[mask]
         # Get the last 3 month-ends' volumes
@@ -74,23 +74,27 @@ def calculate_weights_volume(volume_data, close_data, lot_size):
     return volume_month_end
 
 
-# Read USDJPY chop data and calculate inverse
-usdjpy_data = read_data('vol_trend_data/USDJPY_chop.csv')
+# Read USDJPY chop OHLC_data and calculate inverse
+usdjpy_data = read_data('results/trend_volatility_results/processed_CI_data/USDJPY_CI.csv')
 jpyusd_data = usdjpy_data.apply(lambda x: 1 / x)
-jpyusd_data.to_csv('vol_trend_data/JPYUSD_chop.csv')
+jpyusd_data.to_csv('results/top4_benchmark_results/JPYUSD_CI.csv')
 
-# Read price and volume data for top 4 instruments
-file_names = ['vol_trend_data/EURUSD_chop.csv', 'vol_trend_data/GBPUSD_chop.csv', 'vol_trend_data/JPYUSD_chop.csv',
-              'vol_trend_data/XAUUSD_chop.csv']
-pnl_files = ['vol_trend_data/EURUSD_pnl.csv', 'vol_trend_data/GBPUSD_pnl.csv', 'vol_trend_data/USDJPY_pnl.csv',
-             'vol_trend_data/XAUUSD_pnl.csv']
+# Read price and volume OHLC_data for top 4 instruments
+file_names = ['results/trend_volatility_results/processed_CI_data/EURUSD_CI.csv', 'results/trend_volatility_results'
+                                                                                  '/processed_CI_data/GBPUSD_CI.csv',
+              'results/top4_benchmark_results/JPYUSD_CI.csv',
+              'results/trend_volatility_results/processed_CI_data/XAUUSD_CI.csv']
+pnl_files = ['Input data/trend_volatility_input_data/EURUSD_pnl.csv', 'Input data/trend_volatility_input_data'
+                                                                      '/GBPUSD_pnl.csv',
+             'Input data/trend_volatility_input_data/USDJPY_pnl.csv',
+             'Input data/trend_volatility_input_data/XAUUSD_pnl.csv']
 price_data = [read_data(file) for file in file_names]
 volume_data = [read_data(file, pnl=True) for file in pnl_files]
 
 # Define lot sizes for each instrument
 lot_sizes = pd.Series([100000, 100000, 100000, 100], index=file_names)
 
-# Calculate weights based on last day of each month for price and volume data
+# Calculate weights based on last day of each month for price and volume OHLC_data
 weights_close = [calculate_weights_close(df) for df in price_data]
 print(weights_close)
 
@@ -110,18 +114,18 @@ normalized_weights = [
 
 print(normalized_weights)
 
-# Calculate the top 4 OHLC data based on normalized weights
+# Calculate the top 4 OHLC OHLC_data based on normalized weights
 top4_ohlc = sum([price.div(next(iter(norm_weight.values()))) for price, norm_weight in
                  zip(price_data, normalized_weights)]).dropna()
 
 # Rename index to 'date'
 top4_ohlc.index.name = "date"
 
-# Scale the data using the normalization constant
+# Scale the OHLC_data using the normalization constant
 top4_ohlc *= 1 / normalized_constant
 
-# Save the OHLC data to a new CSV file 'top4.csv'
-top4_ohlc.to_csv("top4.csv")
+# Save the OHLC OHLC_data to a new CSV file 'top4.csv'
+top4_ohlc.to_csv("results/top4_benchmark_results/top4.csv")
 
 
 # Define function to plot candlestick chart with volume
@@ -144,13 +148,13 @@ def plot_candlestick_with_volume(df, title="", warn_too_much_data=None):
     plt.show()
 
 
-# Merge the volume data into the top4_ohlc DataFrame
+# Merge the volume OHLC_data into the top4_ohlc DataFrame
 merged_volume_data = sum(
     [vol.div(next(iter(norm_weight.values()))) for vol, norm_weight in zip(volume_data, normalized_weights)]).dropna()
 top4_ohlc['volume'] = merged_volume_data
 
 
-# Define function to resample data to weekly OHLC
+# Define function to resample OHLC_data to weekly OHLC
 def resample_weekly(df):
     ohlc = df.resample('W').agg({'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last'})
     volume = df['volume'].resample('W').sum()
@@ -158,7 +162,7 @@ def resample_weekly(df):
     return ohlc
 
 
-# Resample the data to weekly OHLC
+# Resample the OHLC_data to weekly OHLC
 top4_ohlc_weekly = resample_weekly(top4_ohlc)
 
 # Plot the candlestick chart with combined notional volume

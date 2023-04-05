@@ -7,18 +7,18 @@ symbols = ['EURUSD', 'GBPUSD', 'XAUUSD', 'USDJPY']
 # Step 2: Create a grid of subplots with the same number of rows as symbols and one column
 fig, axs = plt.subplots(nrows=len(symbols), ncols=1, figsize=(80, 50), sharex=True)
 
-# Step 3: Iterate over each symbol and load and plot the data in the appropriate subplot
+# Step 3: Iterate over each symbol and load and plot the OHLC_data in the appropriate subplot
 for i, symbol in enumerate(symbols):
-    # Load data from Excel file
+    # Load OHLC_data from Excel file
     df = pd.read_excel(f'{symbol}_choppiness_index_new_amended.xlsx')
 
     # Create a new column for color based on the 'trend' column
     df['color'] = df['trend'].map({0: 'black', 1: 'green'})
 
-    # Group the data by the date and the color column, and calculate the mean close price for each group
+    # Group the OHLC_data by the date and the color column, and calculate the mean close price for each group
     grouped = df.groupby(['date', 'color']).mean()['close'].unstack()
 
-    # Plot the data as a line chart, with the color determined by the color column
+    # Plot the OHLC_data as a line chart, with the color determined by the color column
     grouped.plot(ax=axs[i], color=['black', 'green'], linewidth=5)
     axs[i].set_xlabel('Date', fontsize=22)
     axs[i].set_ylabel('Close', fontsize=22)

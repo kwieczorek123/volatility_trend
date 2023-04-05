@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-# Read in the data
-df = pd.read_csv("data/XAUUSD/XAUUSD1440.csv", names=['date', 'time', 'open', 'high', 'low', 'close', 'volume'])
+# Read in the OHLC_data
+df = pd.read_csv("Input data/OHLC_data/XAUUSD/XAUUSD1440.csv", names=['date', 'time', 'open', 'high', 'low', 'close', 'volume'])
 # Set the date as the index
 df.set_index('date', inplace=True)
 # Drop the time and volume columns

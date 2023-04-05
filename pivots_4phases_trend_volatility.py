@@ -6,15 +6,19 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
-# Define file names for input data
-file_names = ['processed_CI_data/EURUSD_CI.csv', 'processed_CI_data/GBPUSD_CI.csv', 'processed_CI_data/USDJPY_CI.csv',
-              'processed_CI_data/XAUUSD_CI.csv']
-spread_all_symbols_file = 'vol_trend_data/spread_all_symbol.csv'
-execution_spread_file = 'vol_trend_data/execution_spread.csv'
-pnl_files = ['vol_trend_data/EURUSD_pnl.csv', 'vol_trend_data/GBPUSD_pnl.csv', 'vol_trend_data/USDJPY_pnl.csv',
-             'vol_trend_data/XAUUSD_pnl.csv']
+# Define file names for input OHLC_data
+file_names = ['results/trend_volatility_results/processed_CI_data/EURUSD_CI.csv', 'results/trend_volatility_results'
+                                                                                  '/processed_CI_data/GBPUSD_CI.csv',
+              'results/trend_volatility_results/processed_CI_data/USDJPY_CI.csv',
+              'results/trend_volatility_results/processed_CI_data/XAUUSD_CI.csv']
+spread_all_symbols_file = 'Input data/trend_volatility_input_data/spread_all_symbol.csv'
+execution_spread_file = 'Input data/trend_volatility_input_data/execution_spread.csv'
+pnl_files = ['Input data/trend_volatility_input_data/EURUSD_pnl.csv', 'Input data/trend_volatility_input_data'
+                                                                      '/GBPUSD_pnl.csv',
+             'Input data/trend_volatility_input_data/USDJPY_pnl.csv',
+             'Input data/trend_volatility_input_data/XAUUSD_pnl.csv']
 
-# Create a dictionary to store PnL data for each symbol
+# Create a dictionary to store PnL OHLC_data for each symbol
 pnl_df_dict = {symbol: pd.read_csv(pnl_file, parse_dates=['day']) for pnl_file, symbol in
                zip(pnl_files, ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD'])}
 
@@ -85,7 +89,7 @@ def add_pnl_per_lot_column(df, pnl_df, symbol):
     return df
 
 
-# Function to process input CSV files, add required columns, and save the processed data to a new CSV file
+# Function to process input CSV files, add required columns, and save the processed OHLC_data to a new CSV file
 def process_csv(file_name, start_date, end_date, spread_df, execution_df, pnl_df_dict):
     symbol = file_name.split('/')[-1].split('_')[0]  # Extract the symbol from the file name
     df = pd.read_csv(file_name, parse_dates=['date'])
@@ -95,7 +99,7 @@ def process_csv(file_name, start_date, end_date, spread_df, execution_df, pnl_df
     df = mark_volatility_trend_actionable(df)
     df = add_spread_columns(df, spread_df, execution_df, symbol)
     df = add_pnl_per_lot_column(df, pnl_df_dict[symbol], symbol)
-    output_dir = "processed_vol_trend_data"
+    output_dir = "results/trend_volatility_results/processed_4phases_data"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     output_file_name = os.path.basename(file_name).replace("_CI", "_vol_trend")  # Replace '_chop' with '_vol_trend'
@@ -111,7 +115,7 @@ def process_csv_long(file_name, start_date, end_date):
     df = filter_date_range(df, start_date, end_date)
     df = mark_volatility_trend(df)
 
-    output_dir = "processed_vol_trend_data_long"
+    output_dir = "results/trend_volatility_results/processed_4phases_data"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     output_file_name = os.path.basename(file_name).replace("_CI", "_vol_trend_long")
@@ -120,7 +124,7 @@ def process_csv_long(file_name, start_date, end_date):
     print(f"Processed {file_name}")
 
 
-# Read input data from the spread and execution files
+# Read input OHLC_data from the spread and execution files
 spread_df = pd.read_csv(spread_all_symbols_file, parse_dates=['day'])
 execution_df = pd.read_csv(execution_spread_file, parse_dates=['date'])
 
@@ -132,7 +136,7 @@ for file_name in file_names:
     process_csv_long(file_name, start_date_long, end_date_long)
 
 
-# Function to create pivot tables and charts using the processed data
+# Function to create pivot tables and charts using the processed OHLC_data
 def create_pivot_tables_and_charts(processed_files):
     processed_dfs = [pd.read_csv(file) for file in processed_files]
 
@@ -218,10 +222,10 @@ def create_pivot_tables_and_charts(processed_files):
             length = max(len(str(cell.value)) for cell in column_cells)
             ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
 
-        wb.save("processed_vol_trend_data/pivots.xlsx")
+        wb.save("results/trend_volatility_results/processed_4phases_data/pivots_4phases.xlsx")
 
 
-# Function to create pivot tables and charts using the processed data
+# Function to create pivot tables and charts using the processed OHLC_data
 def create_pivot_tables_and_charts_actionable(processed_files):
     processed_dfs = [pd.read_csv(file) for file in processed_files]
 
@@ -307,7 +311,7 @@ def create_pivot_tables_and_charts_actionable(processed_files):
             length = max(len(str(cell.value)) for cell in column_cells)
             ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
 
-        wb.save("processed_vol_trend_data/pivots_actionable.xlsx")
+        wb.save("results/trend_volatility_results/processed_4phases_data/pivots_4phases_actionable.xlsx")
 
 
 def create_pivot_tables_and_charts_long(processed_files):
@@ -362,27 +366,27 @@ def create_pivot_tables_and_charts_long(processed_files):
             length = max(len(str(cell.value)) for cell in column_cells)
             ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
 
-    wb.save("processed_vol_trend_data_long/pivots_long.xlsx")
+    wb.save("results/trend_volatility_results/processed_4phases_data/pivots_4phases_long.xlsx")
 
 
 # Add this line to the end of your script to call the function
 create_pivot_tables_and_charts([
-    "processed_vol_trend_data/processed_EURUSD_vol_trend.csv",
-    "processed_vol_trend_data/processed_GBPUSD_vol_trend.csv",
-    "processed_vol_trend_data/processed_USDJPY_vol_trend.csv",
-    "processed_vol_trend_data/processed_XAUUSD_vol_trend.csv"
+    "results/trend_volatility_results/processed_vol_trend_data/processed_EURUSD_vol_trend.csv",
+    "results/trend_volatility_results/processed_vol_trend_data/processed_GBPUSD_vol_trend.csv",
+    "results/trend_volatility_results/processed_vol_trend_data/processed_USDJPY_vol_trend.csv",
+    "results/trend_volatility_results/processed_vol_trend_data/processed_XAUUSD_vol_trend.csv"
 ])
 
 create_pivot_tables_and_charts_actionable([
-    "processed_vol_trend_data/processed_EURUSD_vol_trend.csv",
-    "processed_vol_trend_data/processed_GBPUSD_vol_trend.csv",
-    "processed_vol_trend_data/processed_USDJPY_vol_trend.csv",
-    "processed_vol_trend_data/processed_XAUUSD_vol_trend.csv"
+    "results/trend_volatility_results/processed_vol_trend_data/processed_EURUSD_vol_trend.csv",
+    "results/trend_volatility_results/processed_vol_trend_data/processed_GBPUSD_vol_trend.csv",
+    "results/trend_volatility_results/processed_vol_trend_data/processed_USDJPY_vol_trend.csv",
+    "results/trend_volatility_results/processed_vol_trend_data/processed_XAUUSD_vol_trend.csv"
 ])
 
 create_pivot_tables_and_charts_long([
-    "processed_vol_trend_data_long/processed_EURUSD_vol_trend_long.csv",
-    "processed_vol_trend_data_long/processed_GBPUSD_vol_trend_long.csv",
-    "processed_vol_trend_data_long/processed_USDJPY_vol_trend_long.csv",
-    "processed_vol_trend_data_long/processed_XAUUSD_vol_trend_long.csv"
+    "results/trend_volatility_results/processed_vol_trend_data_long/processed_EURUSD_vol_trend_long.csv",
+    "results/trend_volatility_results/processed_vol_trend_data_long/processed_GBPUSD_vol_trend_long.csv",
+    "results/trend_volatility_results/processed_vol_trend_data_long/processed_USDJPY_vol_trend_long.csv",
+    "results/trend_volatility_results/processed_vol_trend_data_long/processed_XAUUSD_vol_trend_long.csv"
 ])
