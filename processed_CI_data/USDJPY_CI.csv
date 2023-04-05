@@ -1,4 +1,4 @@
-date,open,high,low,close,CI,trend,trend_in_progress
+date,open,high,low,close,CI,trend,in_progress
 2015.05.27,123.05,124.07,122.77,123.61,,0.0,0.0
 2015.05.28,123.61,124.46,123.49,123.95,,0.0,0.0
 2015.05.29,123.94,124.18,123.6,124.11,,0.0,0.0

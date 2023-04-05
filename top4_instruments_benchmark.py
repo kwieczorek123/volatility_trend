@@ -1,9 +1,6 @@
 import pandas as pd
-import numpy as np
 import mplfinance as mpf
 import matplotlib.pyplot as plt
-import pandas_datareader as pdr
-from datetime import datetime, timedelta
 
 
 # Define a function to read in the price data from CSV files

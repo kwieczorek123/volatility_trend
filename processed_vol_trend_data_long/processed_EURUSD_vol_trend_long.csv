@@ -1,4 +1,4 @@
-date,open,high,low,close,CI,trend,trend_in_progress,Volatility,Volatility_median,Volatility_status,Volatility_Trend
+date,open,high,low,close,CI,trend,in_progress,Volatility,Volatility_median,Volatility_status,Volatility_Trend
 2015-01-02,1.20516,1.20696,1.1998,1.19994,34.92724874280332,1.0,0.0,0.005967661276879526,,Low_Volatility,Low Volatility + Trend
 2015-01-05,1.19505,1.19761,1.18626,1.19324,26.524042721089117,1.0,0.0,0.009567885623724959,,Low_Volatility,Low Volatility + Trend
 2015-01-06,1.19329,1.19686,1.1884,1.1889,26.25212477918851,1.0,0.0,0.0071188152137328636,,Low_Volatility,Low Volatility + Trend

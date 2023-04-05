@@ -1,4 +1,4 @@
-date,open,high,low,close,CI,trend,trend_in_progress
+date,open,high,low,close,CI,trend,in_progress
 2014.11.04,1.24819,1.2577,1.24813,1.25452,,0.0,0.0
 2014.11.05,1.25443,1.25671,1.24574,1.2485,,0.0,0.0
 2014.11.06,1.2485,1.25331,1.23649,1.23735,,0.0,0.0
