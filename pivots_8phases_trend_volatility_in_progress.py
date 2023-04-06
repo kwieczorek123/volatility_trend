@@ -404,22 +404,22 @@ def create_pivot_tables_and_charts_long(processed_files):
 
 # Add this line to the end of your script to call the function
 create_pivot_tables_and_charts([
-    "results/trend_volatility_results/processed_CI_test_data/processed_EURUSD_vol_trend.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_GBPUSD_vol_trend.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_USDJPY_vol_trend.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_XAUUSD_vol_trend.csv"
+    "results/trend_volatility_results/processed_8phases_data/processed_EURUSD_vol_trend.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_GBPUSD_vol_trend.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_USDJPY_vol_trend.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_XAUUSD_vol_trend.csv"
 ])
 
 create_pivot_tables_and_charts_actionable([
-    "results/trend_volatility_results/processed_CI_test_data/processed_EURUSD_vol_trend.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_GBPUSD_vol_trend.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_USDJPY_vol_trend.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_XAUUSD_vol_trend.csv"
+    "results/trend_volatility_results/processed_8phases_data/processed_EURUSD_vol_trend.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_GBPUSD_vol_trend.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_USDJPY_vol_trend.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_XAUUSD_vol_trend.csv"
 ])
 
 create_pivot_tables_and_charts_long([
-    "results/trend_volatility_results/processed_CI_test_data/processed_EURUSD_vol_trend_long.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_GBPUSD_vol_trend_long.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_USDJPY_vol_trend_long.csv",
-    "results/trend_volatility_results/processed_CI_test_data/processed_XAUUSD_vol_trend_long.csv"
+    "results/trend_volatility_results/processed_8phases_data/processed_EURUSD_vol_trend_long.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_GBPUSD_vol_trend_long.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_USDJPY_vol_trend_long.csv",
+    "results/trend_volatility_results/processed_8phases_data/processed_XAUUSD_vol_trend_long.csv"
 ])

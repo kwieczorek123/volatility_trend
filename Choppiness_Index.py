@@ -57,14 +57,13 @@ for symbol in list_of_symbols:
             df.loc[df.index[i], 'trend'] = 0
             df.loc[df.index[i], 'in_progress'] = 0
 
-        # + 2. When the CI is below upper_band and was above upper_band in the previous row, we mark a start_date and
+        # 2. When the CI is below upper_band and was above upper_band in the previous row, we mark a start_date and
         # set trend and in_progress to 0.5
         elif df['CI'].iloc[i] < upper_band <= df['CI'].iloc[i - 1] and start_date is None:
             start_date = df.index[i]
             df.loc[df.index[i], 'trend'] = 0.5
             df.loc[df.index[i], 'in_progress'] = 0.5
 
-        # Options after point 2
         elif start_date is not None and mid_date is None:
             # Update trend and in_progress columns for the current row
             df.loc[df.index[i], 'trend'] = 0.5
@@ -136,7 +135,7 @@ for symbol in list_of_symbols:
                 df.loc[start_date:finish_date, 'trend'] = 0
                 df.loc[df.index[df.index.get_loc(mid_date)]:, 'in_progress'] = 0
 
-    # Add the new loop for additional logic
+    # Add the new loop for fixing any exceptions
     current_trend_start = None
     for i in range(len(df)):
         # If trend is 1 and in_progress is 0, we have a finished trend
@@ -144,7 +143,7 @@ for symbol in list_of_symbols:
             if current_trend_start is None:
                 current_trend_start = df.index[i]
 
-        # If there is a finished trend and CI goes above 38.2, check the next 10 periods
+        # If there is a finished trend and CI goes above 38.2, check the next reloop_lenght periods if it goes below
         elif current_trend_start is not None and df['CI'].iloc[i] > lower_band:
             trend_continued = False
             for j in range(i + 1, min(i + reloop_lenght + 1, len(df))):
@@ -160,7 +159,7 @@ for symbol in list_of_symbols:
             else:
                 current_trend_start = None
 
-    # Add the code snippet after the main loop
+    # Fix all the trend=0.5, except the ongoing trend in progress
     last_zero_index = df[df['in_progress'] == 0].index[-1]
     df.loc[(df.index < last_zero_index) & (df['trend'] == 0.5), 'trend'] = 0
 
@@ -168,4 +167,4 @@ for symbol in list_of_symbols:
     df.drop(columns=['TR', 'ATR'], inplace=True)
 
     # Save the results to a CSV file
-    df.to_csv(f'results/trend_volatility_results/processed_CI_data/{symbol}_CI.csv')
+    df.to_csv(f'results/trend_volatility_results/processed_CI_data/{symbol}_CI_daily.csv')
